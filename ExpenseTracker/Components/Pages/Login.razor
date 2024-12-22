@@ -1,5 +1,40 @@
-﻿<h3>Login</h3>
+﻿@page "/login"
+
+<div class="login-container">
+    <h2>Login</h2>
+    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+        <div>
+            <label for="username">Username:</label>
+            <InputText id="username" @bind-Value="loginModel.Username" required class="input-field" />
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <InputText id="password" @bind-Value="loginModel.Password" type="password" required class="input-field" />
+        </div>
+        <div>
+            <button type="submit" class="btn">Login</button>
+        </div>
+    </EditForm>
+</div>
 
 @code {
+    private LoginModel loginModel = new LoginModel();
 
+    private void HandleLogin()
+    {
+        if (loginModel.Username == "admin" && loginModel.Password == "password")
+        {
+            Console.WriteLine("Login Successful!");
+        }
+        else
+        {
+            Console.WriteLine("Invalid Username or Password!");
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
 }

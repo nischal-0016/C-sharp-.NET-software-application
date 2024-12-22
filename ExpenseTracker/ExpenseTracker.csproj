@@ -58,6 +58,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Remove="Components\Pages\Counter.razor" />
+      <Content Remove="Components\Pages\Register.razor" />
+      <Content Remove="Components\Pages\Weather.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
