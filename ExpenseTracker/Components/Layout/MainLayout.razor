@@ -9,13 +9,6 @@
     }
 
     <main>
-        <div class="top-row px-4">
-            @if (!IsLoginPage)
-            {
-                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-            }
-        </div>
-
         <article class="content px-4">
             @Body
         </article>
@@ -23,7 +16,7 @@
 </div>
 
 @code {
-    private bool IsLoginPage => NavigationManager.Uri.Contains("/login");
-
     [Inject] private NavigationManager NavigationManager { get; set; }
+
+    private bool IsLoginPage => NavigationManager.Uri.EndsWith("/");
 }

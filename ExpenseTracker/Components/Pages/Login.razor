@@ -20,11 +20,14 @@
 @code {
     private LoginModel loginModel = new LoginModel();
 
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
     private void HandleLogin()
     {
-        if (loginModel.Username == "admin" && loginModel.Password == "password")
+        if (loginModel.Username == "admin" && loginModel.Password == "admin")
         {
             Console.WriteLine("Login Successful!");
+            NavigationManager.NavigateTo("/home");
         }
         else
         {
