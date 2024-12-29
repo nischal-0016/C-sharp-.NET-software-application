@@ -32,8 +32,16 @@
         else
         {
             Console.WriteLine("Invalid Username or Password!");
+            ShowErrorMessage();
         }
     }
+
+    private void ShowErrorMessage()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Invalid Username or Password!");
+    }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; }
 
     public class LoginModel
     {
