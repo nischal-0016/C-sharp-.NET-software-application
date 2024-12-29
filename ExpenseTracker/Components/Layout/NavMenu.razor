@@ -17,40 +17,34 @@
 
         <!-- Dashboard Link -->
         <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/dashboard">
-                    <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> Dashboard
-                </NavLink>
+            <NavLink class="nav-link" href="/dashboard">
+                <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> Dashboard
+            </NavLink>
         </div>
 
-            <!-- Expenses Link -->
+        <!-- Expenses Link -->
         <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/expenses">
-                    <span class="bi bi-wallet2-nav-menu" aria-hidden="true"></span> Expenses
-                </NavLink>
+            <NavLink class="nav-link" href="/expenses">
+                <span class="bi bi-wallet2-nav-menu" aria-hidden="true"></span> Expenses
+            </NavLink>
         </div>
 
         <!-- Debts Link -->
         <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/debts">
-                    <span class="bi bi-exclamation-circle-nav-menu" aria-hidden="true"></span> Debts
-                </NavLink>
+            <NavLink class="nav-link" href="/debts">
+                <span class="bi bi-exclamation-circle-nav-menu" aria-hidden="true"></span> Debts
+            </NavLink>
         </div>
 
-        <!-- Login/Logout Link -->
-        <div class="nav-item px-3">
-            @if (isLoggedIn)
-            {
-                <button class="btn btn-link nav-link" @onclick="Logout">
+        <!-- Logout Link -->
+        @if (isLoggedIn)
+        {
+            <div class="nav-item px-3">
+                <a class="nav-link" href="#" @onclick="Logout">
                     <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout
-                </button>
-            }
-            else
-            {
-                <NavLink class="nav-link" href="/">
-                    <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
-                </NavLink>
-            }
-        </div>
+                </a>
+            </div>
+        }
     </nav>
 </div>
 
@@ -59,13 +53,13 @@
 
     protected override void OnInitialized()
     {
-        isLoggedIn = false;
+        isLoggedIn = true;
     }
 
     private void Logout()
     {
         isLoggedIn = false;
-        NavigationManager.NavigateTo("/login");
+        NavigationManager.NavigateTo("/");
     }
 
     [Inject] private NavigationManager NavigationManager { get; set; }
