@@ -1,5 +1,54 @@
 ﻿@page "/debts"
+<h3>Debts</h3>
 
-<div class="home-container">
-    <h1>This is debts</h1>
+<div class="debts-container">
+    <h4>Add Debt</h4>
+    <EditForm Model="@newDebt" OnValidSubmit="@AddDebt">
+        <div>
+            <label for="title">Title:</label>
+            <InputText id="title" @bind-Value="newDebt.Title" required />
+        </div>
+        <div>
+            <label for="amount">Amount:</label>
+            <InputNumber id="amount" @bind-Value="newDebt.Amount" required />
+        </div>
+        <div>
+            <label for="dueDate">Due Date:</label>
+            <InputDate id="dueDate" @bind-Value="newDebt.DueDate" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Debt</button>
+    </EditForm>
+
+    <h4>Debt List</h4>
+    <ul>
+        @foreach (var debt in debts)
+        {
+            <li>@debt.Title - @debt.Amount (Due: @debt.DueDate.ToShortDateString())</li>
+        }
+    </ul>
 </div>
+
+@code {
+    private DebtItem newDebt = new();
+    private List<DebtItem> debts = new();
+
+    private void AddDebt()
+    {
+        debts.Add(new DebtItem
+            {
+                Title = newDebt.Title,
+                Amount = newDebt.Amount,
+                DueDate = newDebt.DueDate
+            });
+
+        newDebt = new DebtItem();
+    }
+
+    public class DebtItem
+    {
+        public string Title { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
+    }
+}
+

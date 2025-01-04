@@ -1,5 +1,54 @@
 ﻿@page "/expenses"
+<h3>Expenses</h3>
 
-<div class="home-container">
-    <h1>This is expenses</h1>
+<div class="expenses-container">
+    <h4>Add Expense</h4>
+    <EditForm Model="@newExpense" OnValidSubmit="@AddExpense">
+        <div>
+            <label for="title">Title:</label>
+            <InputText id="title" @bind-Value="newExpense.Title" required />
+        </div>
+        <div>
+            <label for="amount">Amount:</label>
+            <InputNumber id="amount" @bind-Value="newExpense.Amount" required />
+        </div>
+        <div>
+            <label for="tag">Tag:</label>
+            <InputText id="tag" @bind-Value="newExpense.Tag" />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+    </EditForm>
+
+    <h4>Expense List</h4>
+    <ul>
+        @foreach (var expense in expenses)
+        {
+            <li>@expense.Title - @expense.Amount (@expense.Tag)</li>
+        }
+    </ul>
 </div>
+
+@code {
+    private ExpenseItem newExpense = new();
+    private List<ExpenseItem> expenses = new();
+
+    private void AddExpense()
+    {
+        expenses.Add(new ExpenseItem
+            {
+                Title = newExpense.Title,
+                Amount = newExpense.Amount,
+                Tag = newExpense.Tag
+            });
+
+        newExpense = new ExpenseItem();
+    }
+
+    public class ExpenseItem
+    {
+        public string Title { get; set; }
+        public decimal Amount { get; set; }
+        public string Tag { get; set; }
+    }
+}
+

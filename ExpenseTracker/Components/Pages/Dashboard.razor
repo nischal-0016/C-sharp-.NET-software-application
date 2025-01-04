@@ -1,5 +1,71 @@
 ﻿@page "/dashboard"
 
-<div class="home-container">
-    <h1>This is dashboard</h1>
+<div class="dashboard-container">
+    <h1 class="dashboard-title">Dashboard</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h2>Total Inflows</h2>
+            <p>@totalInflows.ToString("C")</p>
+        </div>
+        <div class="stat-card">
+            <h2>Total Outflows</h2>
+            <p>@totalOutflows.ToString("C")</p>
+        </div>
+        <div class="stat-card">
+            <h2>Remaining Debts</h2>
+            <p>@remainingDebts.ToString("C")</p>
+        </div>
+        <div class="stat-card">
+            <h2>Cleared Debts</h2>
+            <p>@clearedDebts.ToString("C")</p>
+        </div>
+    </div>
+
+    <div class="transaction-section">
+        <h2>Recent Transactions</h2>
+        <table class="transaction-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transaction in recentTransactions)
+                {
+                    <tr>
+                        <td>@transaction.Title</td>
+                        <td>@transaction.Type</td>
+                        <td>@transaction.Amount.ToString("C")</td>
+                        <td>@transaction.Date.ToShortDateString()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
+
+@code {
+    private decimal totalInflows = 5000.00m;
+    private decimal totalOutflows = 3000.00m;
+    private decimal remainingDebts = 1500.00m;
+    private decimal clearedDebts = 500.00m;
+
+    private List<Transaction> recentTransactions = new()
+    {
+        new Transaction { Title = "Salary", Type = "Inflows", Amount = 2000, Date = DateTime.Now.AddDays(-2) },
+        new Transaction { Title = "Rent", Type = "Outflows", Amount = 1000, Date = DateTime.Now.AddDays(-5) },
+        new Transaction { Title = "Loan Repayment", Type = "Debt", Amount = 500, Date = DateTime.Now.AddDays(-10) }
+    };
+
+    public class Transaction
+    {
+        public string Title { get; set; }
+        public string Type { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime Date { get; set; }
+    }
+}
