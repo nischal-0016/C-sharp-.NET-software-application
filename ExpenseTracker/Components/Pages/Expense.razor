@@ -2,6 +2,7 @@
 @using ExpenseTracker.Models
 @using ExpenseTracker.Services
 @inject TransactionService TransactionService
+@inject TagService TagService
 @inject NavigationManager NavigationManager
 
 <h3>Add Transaction</h3>
@@ -28,7 +29,7 @@
     </div>
 
     <div class="form-group">
-        <label>Type:</label>
+        <label>Transaction Type:</label>
         <InputSelect @bind-Value="newTransaction.Type" class="form-control">
             <option value="">Select Type</option>
             <option value="Inflow">Inflow</option>
@@ -36,6 +37,17 @@
             <option value="Debt">Debt</option>
         </InputSelect>
         <ValidationMessage For="@(() => newTransaction.Type)" />
+    </div>
+
+    <div class="form-group">
+        <label>Tag (Optional):</label>
+        <InputSelect @bind-Value="selectedTag" class="form-control">
+            <option value="">Select Tag</option>
+            @foreach (var tag in TagService.Tags)
+            {
+                <option value="@tag">@tag</option>
+            }
+        </InputSelect>
     </div>
 
     <div class="form-group">
@@ -51,9 +63,15 @@
 
 @code {
     private TransactionItem newTransaction = new();
+    private string selectedTag;
 
     private void AddTransaction()
     {
+        if (!string.IsNullOrWhiteSpace(selectedTag))
+        {
+            newTransaction.Tag = selectedTag;
+        }
+
         TransactionService.AddTransaction(newTransaction);
         NavigateToDashboard();
     }

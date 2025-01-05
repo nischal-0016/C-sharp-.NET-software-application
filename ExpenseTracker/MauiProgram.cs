@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using ExpenseTracker.Services; // Add this line
+using ExpenseTracker.Services; 
 
 namespace ExpenseTracker
 {
@@ -22,7 +22,6 @@ namespace ExpenseTracker
             builder.Services.AddSingleton<ExpenseService>();
             builder.Services.AddSingleton<TagService>();
             builder.Services.AddSingleton<TransactionService>();
-            builder.Services.AddSingleton<DebtService>();
             return builder.Build();
         }
     }
