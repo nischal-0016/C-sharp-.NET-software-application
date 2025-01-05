@@ -1,0 +1,18 @@
+[
+  {
+    "Date": "2025-01-05T00:00:00",
+    "Title": "test",
+    "Amount": 10000,
+    "Type": "Outflow",
+    "Tag": null,
+    "Notes": "test"
+  },
+  {
+    "Date": "2025-01-05T00:00:00",
+    "Title": "gg",
+    "Amount": 100,
+    "Type": "Inflow",
+    "Tag": null,
+    "Notes": "gg"
+  }
+]
