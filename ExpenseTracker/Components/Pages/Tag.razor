@@ -1,14 +1,12 @@
-﻿
+﻿@inject TagService TagService
+
 @page "/tag"
 <div class="flex">
-    <!-- Navigation Menu -->
     <NavMenu />
 
-    <!-- Tag Management Section -->
     <div class="ml-72 w-full rounded-lg bg-gray-100 p-8 shadow-md">
         <h3 class="mb-6 text-2xl font-bold text-gray-800">Tag Management</h3>
 
-        <!-- Input field and button to add a tag -->
         <div class="mb-6 flex items-center gap-4">
             <input @bind="newTag"
                    placeholder="Enter a new tag"
@@ -19,10 +17,9 @@
             </button>
         </div>
 
-        <!-- Display existing tags -->
         <h4 class="mb-4 text-xl font-semibold text-gray-700">Existing Tags</h4>
         <ul class="space-y-2">
-            @foreach (var tag in tags)
+            @foreach (var tag in TagService.Tags)
             {
                 <li class="flex items-center justify-between rounded-lg border bg-white p-2 shadow-sm">
                     <span class="text-gray-800">@tag</span>
@@ -37,23 +34,16 @@
 </div>
 
 @code {
-
     private string newTag;
-    private List<string> tags = new List<string> { "Food", "Transport", "Utilities", "Entertainment" };
 
     private void AddNewTag()
     {
-        if (!string.IsNullOrWhiteSpace(newTag))
-        {
-            tags.Add(newTag);
-            newTag = string.Empty;
-        }
+        TagService.AddTag(newTag);
+        newTag = string.Empty;
     }
 
     private void RemoveTag(string tag)
     {
-        tags.Remove(tag);
+        TagService.RemoveTag(tag);
     }
 }
-
-

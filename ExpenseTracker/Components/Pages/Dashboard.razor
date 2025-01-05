@@ -1,71 +1,126 @@
 ﻿@page "/dashboard"
+@using ExpenseTracker.Models
+@using ExpenseTracker.Services
+@inject TransactionService TransactionService
+@implements IDisposable
 
-<div class="dashboard-container">
-    <h1 class="dashboard-title">Dashboard</h1>
+<h3>Dashboard</h3>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h2>Total Inflows</h2>
-            <p>@totalInflows.ToString("C")</p>
+<div class="summary-section">
+    <h4>Summary</h4>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <label>Total Inflows:</label>
+            <span class="amount positive">Rs @TotalInflows.ToString("N2")</span>
         </div>
-        <div class="stat-card">
-            <h2>Total Outflows</h2>
-            <p>@totalOutflows.ToString("C")</p>
+        <div class="summary-item">
+            <label>Total Outflows:</label>
+            <span class="amount negative">Rs @TotalOutflows.ToString("N2")</span>
         </div>
-        <div class="stat-card">
-            <h2>Remaining Debts</h2>
-            <p>@remainingDebts.ToString("C")</p>
+        <div class="summary-item">
+            <label>Total Debts:</label>
+            <span class="amount">Rs @TotalDebts.ToString("N2")</span>
         </div>
-        <div class="stat-card">
-            <h2>Cleared Debts</h2>
-            <p>@clearedDebts.ToString("C")</p>
+        <div class="summary-item">
+            <label>Pending Debts:</label>
+            <span class="amount negative">Rs @PendingDebts.ToString("N2")</span>
         </div>
-    </div>
-
-    <div class="transaction-section">
-        <h2>Recent Transactions</h2>
-        <table class="transaction-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var transaction in recentTransactions)
-                {
-                    <tr>
-                        <td>@transaction.Title</td>
-                        <td>@transaction.Type</td>
-                        <td>@transaction.Amount.ToString("C")</td>
-                        <td>@transaction.Date.ToShortDateString()</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
     </div>
 </div>
 
-@code {
-    private decimal totalInflows = 5000.00m;
-    private decimal totalOutflows = 3000.00m;
-    private decimal remainingDebts = 1500.00m;
-    private decimal clearedDebts = 500.00m;
+<div class="filter-section">
+    <h4>Your Transactions</h4>
+    <div class="date-filter">
+        <label>Filter by Date:</label>
+        <InputDate @bind-Value="StartDate" class="form-control" />
+        <span>to</span>
+        <InputDate @bind-Value="EndDate" class="form-control" />
+        <button @onclick="FilterTransactions" class="btn btn-primary">Apply Filter</button>
+    </div>
+</div>
 
-    private List<Transaction> recentTransactions = new()
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in FilteredTransactions)
+            {
+                <tr>
+                    <td>@transaction.Date.ToShortDateString()</td>
+                    <td>@transaction.Title</td>
+                    <td>
+                        <span class="badge @GetTypeClass(transaction.Type)">
+                            @transaction.Type
+                        </span>
+                    </td>
+                    <td class="@GetAmountClass(transaction.Type)">
+                        Rs @transaction.Amount.ToString("N2")
+                    </td>
+                    <td>@transaction.Notes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@code {
+    private DateTime StartDate { get; set; } = DateTime.Today.AddMonths(-1);
+    private DateTime EndDate { get; set; } = DateTime.Today;
+    private List<TransactionItem> FilteredTransactions { get; set; } = new();
+
+    protected override void OnInitialized()
     {
-        new Transaction { Title = "Salary", Type = "Inflows", Amount = 2000, Date = DateTime.Now.AddDays(-2) },
-        new Transaction { Title = "Rent", Type = "Outflows", Amount = 1000, Date = DateTime.Now.AddDays(-5) },
-        new Transaction { Title = "Loan Repayment", Type = "Debt", Amount = 500, Date = DateTime.Now.AddDays(-10) }
+        TransactionService.OnChange += StateHasChanged;
+        FilterTransactions();
+    }
+
+    public void Dispose()
+    {
+        TransactionService.OnChange -= StateHasChanged;
+    }
+
+    private void FilterTransactions()
+    {
+        FilteredTransactions = TransactionService.GetFilteredTransactions(StartDate, EndDate);
+        StateHasChanged();
+    }
+
+    private decimal TotalInflows => TransactionService.Transactions
+        .Where(t => t.Type == "Inflow")
+        .Sum(t => t.Amount);
+
+    private decimal TotalOutflows => TransactionService.Transactions
+        .Where(t => t.Type == "Outflow")
+        .Sum(t => t.Amount);
+
+    private decimal TotalDebts => TransactionService.Transactions
+        .Where(t => t.Type == "Debt")
+        .Sum(t => t.Amount);
+
+    private decimal PendingDebts => TransactionService.Transactions
+        .Where(t => t.Type == "Debt" && t.Amount > 0)
+        .Sum(t => t.Amount);
+
+    private string GetTypeClass(string type) => type.ToLower() switch
+    {
+        "inflow" => "badge-inflow",
+        "outflow" => "badge-outflow",
+        "debt" => "badge-debt",
+        _ => ""
     };
 
-    public class Transaction
+    private string GetAmountClass(string type) => type.ToLower() switch
     {
-        public string Title { get; set; }
-        public string Type { get; set; }
-        public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
-    }
+        "inflow" => "text-success",
+        "outflow" => "text-danger",
+        "debt" => "text-warning",
+        _ => ""
+    };
 }

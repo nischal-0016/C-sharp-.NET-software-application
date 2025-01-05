@@ -1,54 +1,65 @@
 ﻿@page "/expenses"
-<h3>Expenses</h3>
+@using ExpenseTracker.Models
+@using ExpenseTracker.Services
+@inject TransactionService TransactionService
+@inject NavigationManager NavigationManager
 
-<div class="expenses-container">
-    <h4>Add Expense</h4>
-    <EditForm Model="@newExpense" OnValidSubmit="@AddExpense">
-        <div>
-            <label for="title">Title:</label>
-            <InputText id="title" @bind-Value="newExpense.Title" required />
-        </div>
-        <div>
-            <label for="amount">Amount:</label>
-            <InputNumber id="amount" @bind-Value="newExpense.Amount" required />
-        </div>
-        <div>
-            <label for="tag">Tag:</label>
-            <InputText id="tag" @bind-Value="newExpense.Tag" />
-        </div>
-        <button type="submit" class="btn btn-primary">Add Expense</button>
-    </EditForm>
+<h3>Add Transaction</h3>
 
-    <h4>Expense List</h4>
-    <ul>
-        @foreach (var expense in expenses)
-        {
-            <li>@expense.Title - @expense.Amount (@expense.Tag)</li>
-        }
-    </ul>
-</div>
+<EditForm Model="@newTransaction" OnValidSubmit="@AddTransaction" class="transaction-form">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Date:</label>
+        <InputDate @bind-Value="newTransaction.Date" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Title:</label>
+        <InputText @bind-Value="newTransaction.Title" class="form-control" />
+        <ValidationMessage For="@(() => newTransaction.Title)" />
+    </div>
+
+    <div class="form-group">
+        <label>Amount:</label>
+        <InputNumber @bind-Value="newTransaction.Amount" class="form-control" />
+        <ValidationMessage For="@(() => newTransaction.Amount)" />
+    </div>
+
+    <div class="form-group">
+        <label>Type:</label>
+        <InputSelect @bind-Value="newTransaction.Type" class="form-control">
+            <option value="">Select Type</option>
+            <option value="Inflow">Inflow</option>
+            <option value="Outflow">Outflow</option>
+            <option value="Debt">Debt</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => newTransaction.Type)" />
+    </div>
+
+    <div class="form-group">
+        <label>Notes:</label>
+        <InputTextArea @bind-Value="newTransaction.Notes" class="form-control" />
+    </div>
+
+    <div class="button-group">
+        <button type="submit" class="btn btn-primary">Add Transaction</button>
+        <button type="button" class="btn btn-secondary" @onclick="NavigateToDashboard">Cancel</button>
+    </div>
+</EditForm>
 
 @code {
-    private ExpenseItem newExpense = new();
-    private List<ExpenseItem> expenses = new();
+    private TransactionItem newTransaction = new();
 
-    private void AddExpense()
+    private void AddTransaction()
     {
-        expenses.Add(new ExpenseItem
-            {
-                Title = newExpense.Title,
-                Amount = newExpense.Amount,
-                Tag = newExpense.Tag
-            });
-
-        newExpense = new ExpenseItem();
+        TransactionService.AddTransaction(newTransaction);
+        NavigateToDashboard();
     }
 
-    public class ExpenseItem
+    private void NavigateToDashboard()
     {
-        public string Title { get; set; }
-        public decimal Amount { get; set; }
-        public string Tag { get; set; }
+        NavigationManager.NavigateTo("/dashboard");
     }
 }
-
