@@ -70,10 +70,42 @@
         </tbody>
     </table>
 </div>
+
+<div class="mt-4 d-flex justify-content-end">
+    <button class="btn btn-danger" @onclick="ShowClearConfirmation">
+        Clear All Transactions
+    </button>
+</div>
+
+@if (showConfirmDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Clear</h5>
+                    <button type="button" class="close" @onclick="HideClearConfirmation">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to clear all transactions? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideClearConfirmation">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="ClearAllTransactions">Clear All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     private DateTime StartDate { get; set; } = DateTime.Today.AddMonths(-1);
     private DateTime EndDate { get; set; } = DateTime.Today;
     private List<TransactionItem> FilteredTransactions { get; set; } = new();
+    private bool showConfirmDialog = false;
 
     protected override void OnInitialized()
     {
@@ -100,19 +132,61 @@
         .Where(t => t.Type == "Outflow")
         .Sum(t => t.Amount);
 
-    private decimal TotalDebts => TransactionService.Transactions
-        .Where(t => t.Type == "Debt")
-        .Sum(t => t.Amount);
+    private decimal TotalDebts
+    {
+        get
+        {
+            var debts = TransactionService.Transactions
+                .Where(t => t.Type == "Debt")
+                .ToList();
 
-    private decimal PendingDebts => TransactionService.Transactions
-        .Where(t => t.Type == "Debt" && t.Amount > 0)
-        .Sum(t => t.Amount);
+            decimal totalDebt = 0;
+
+            foreach (var debt in debts)
+            {
+                var payments = TransactionService.Transactions
+                    .Where(t => t.Type == "DebtPayment" && t.RelatedTransactionId == debt.Id)
+                    .Sum(t => t.Amount);
+
+                totalDebt += debt.Amount;
+            }
+
+            return totalDebt;
+        }
+    }
+
+    private decimal PendingDebts
+    {
+        get
+        {
+            var debts = TransactionService.Transactions
+                .Where(t => t.Type == "Debt")
+                .ToList();
+
+            decimal totalPending = 0;
+
+            foreach (var debt in debts)
+            {
+                if (!debt.IsPaid)
+                {
+                    var payments = TransactionService.Transactions
+                        .Where(t => t.Type == "DebtPayment" && t.RelatedTransactionId == debt.Id)
+                        .Sum(t => t.Amount);
+
+                    totalPending += debt.Amount - payments;
+                }
+            }
+
+            return totalPending;
+        }
+    }
 
     private string GetTypeClass(string type) => type.ToLower() switch
     {
         "inflow" => "badge-inflow",
         "outflow" => "badge-outflow",
         "debt" => "badge-debt",
+        "debtpayment" => "badge-success",
         _ => ""
     };
 
@@ -121,6 +195,24 @@
         "inflow" => "text-success",
         "outflow" => "text-danger",
         "debt" => "text-warning",
+        "debtpayment" => "text-success",
         _ => ""
     };
+
+    private void ShowClearConfirmation()
+    {
+        showConfirmDialog = true;
+    }
+
+    private void HideClearConfirmation()
+    {
+        showConfirmDialog = false;
+    }
+
+    private void ClearAllTransactions()
+    {
+        TransactionService.ClearAllTransactions();
+        FilterTransactions();
+        showConfirmDialog = false;
+    }
 }

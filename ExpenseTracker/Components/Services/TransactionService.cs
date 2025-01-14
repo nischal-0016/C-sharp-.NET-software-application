@@ -14,7 +14,6 @@ namespace ExpenseTracker.Services
 
         public TransactionService()
         {
-            // Set the file path to the specified directory
             string directoryPath = @"C:\Users\koira\Source\Repos\C-.NET-software-application";
             FilePath = Path.Combine(directoryPath, "transactions.json");
 
@@ -47,17 +46,39 @@ namespace ExpenseTracker.Services
 
         private void LoadTransactions()
         {
-            if (File.Exists(FilePath))
+            try
             {
-                var json = File.ReadAllText(FilePath);
-                transactions = JsonSerializer.Deserialize<List<TransactionItem>>(json) ?? new List<TransactionItem>();
+                if (File.Exists(FilePath))
+                {
+                    var json = File.ReadAllText(FilePath);
+                    transactions = JsonSerializer.Deserialize<List<TransactionItem>>(json) ?? new List<TransactionItem>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading transactions: {ex.Message}");
+                transactions = new List<TransactionItem>();
             }
         }
 
         private void SaveTransactions()
         {
-            var json = JsonSerializer.Serialize(transactions, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(FilePath, json);
+            try
+            {
+                var json = JsonSerializer.Serialize(transactions, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(FilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving transactions: {ex.Message}");
+            }
+        }
+
+        public void ClearAllTransactions()
+        {
+            transactions.Clear();
+            SaveTransactions(); 
+            OnChange?.Invoke(); 
         }
     }
 }

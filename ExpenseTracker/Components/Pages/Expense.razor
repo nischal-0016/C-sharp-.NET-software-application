@@ -30,7 +30,7 @@
 
     <div class="form-group">
         <label>Transaction Type:</label>
-        <InputSelect @bind-Value="newTransaction.Type" class="form-control">
+        <InputSelect @bind-Value="newTransaction.Type" class="form-control" @onchange="HandleTypeChange">
             <option value="">Select Type</option>
             <option value="Inflow">Inflow</option>
             <option value="Outflow">Outflow</option>
@@ -38,6 +38,20 @@
         </InputSelect>
         <ValidationMessage For="@(() => newTransaction.Type)" />
     </div>
+
+    @if (newTransaction.Type == "Inflow" && HasPendingDebts)
+    {
+        <div class="form-group">
+            <label>Apply to Debt:</label>
+            <InputSelect @bind-Value="selectedDebtId" class="form-control">
+                <option value="">Don't apply to debt</option>
+                @foreach (var debt in PendingDebts)
+                {
+                    <option value="@debt.Id">@debt.Title - Rs @debt.Amount.ToString("N2")</option>
+                }
+            </InputSelect>
+        </div>
+    }
 
     <div class="form-group">
         <label>Tag (Optional):</label>
@@ -62,8 +76,19 @@
 </EditForm>
 
 @code {
-    private TransactionItem newTransaction = new();
+    private TransactionItem newTransaction = new() { Date = DateTime.Today };
     private string selectedTag;
+    private string selectedDebtId;
+    private bool HasPendingDebts => PendingDebts.Any();
+
+    private List<TransactionItem> PendingDebts => TransactionService.Transactions
+        .Where(t => t.Type == "Debt" && !t.IsPaid)
+        .ToList();
+
+    private void HandleTypeChange(ChangeEventArgs e)
+    {
+        selectedDebtId = string.Empty;
+    }
 
     private void AddTransaction()
     {
@@ -72,7 +97,51 @@
             newTransaction.Tag = selectedTag;
         }
 
-        TransactionService.AddTransaction(newTransaction);
+        if (newTransaction.Type == "Inflow" && !string.IsNullOrEmpty(selectedDebtId))
+        {
+            var debt = TransactionService.Transactions
+                .FirstOrDefault(t => t.Id == selectedDebtId);
+
+            if (debt != null)
+            {
+                // Create a debt payment transaction
+                var debtPayment = new TransactionItem
+                    {
+                        Date = newTransaction.Date,
+                        Title = $"Debt Payment - {debt.Title}",
+                        Amount = Math.Min(newTransaction.Amount, debt.Amount),
+                        Type = "DebtPayment",
+                        Notes = $"Payment for debt: {debt.Title}",
+                        RelatedTransactionId = debt.Id
+                    };
+
+                // Update the original debt
+                debt.IsPaid = debtPayment.Amount >= debt.Amount;
+                if (!debt.IsPaid)
+                {
+                    debt.Amount -= debtPayment.Amount;
+                }
+
+                // Adjust the inflow amount
+                newTransaction.Amount -= debtPayment.Amount;
+
+                // Add both transactions
+                TransactionService.AddTransaction(debtPayment);
+                if (newTransaction.Amount > 0)
+                {
+                    TransactionService.AddTransaction(newTransaction);
+                }
+            }
+            else
+            {
+                TransactionService.AddTransaction(newTransaction);
+            }
+        }
+        else
+        {
+            TransactionService.AddTransaction(newTransaction);
+        }
+
         NavigateToDashboard();
     }
 
