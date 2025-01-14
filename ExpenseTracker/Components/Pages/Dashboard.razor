@@ -30,11 +30,21 @@
 
 <div class="filter-section">
     <h4>Your Transactions</h4>
-    <div class="date-filter">
-        <label>Filter by Date:</label>
-        <InputDate @bind-Value="StartDate" class="form-control" />
-        <span>to</span>
-        <InputDate @bind-Value="EndDate" class="form-control" />
+    <div class="filter-grid">
+        <div>
+            <InputDate @bind-Value="StartDate" TValue="DateTime" class="form-control" />
+            <span>to</span>
+            <InputDate @bind-Value="EndDate" TValue="DateTime" class="form-control" />
+        </div>
+        <div>
+            <label>Filter by Type:</label>
+            <select @bind="SelectedType" class="form-control">
+                <option value="All">All</option>
+                <option value="Inflow">Inflow</option>
+                <option value="Outflow">Outflow</option>
+                <option value="Debt">Debt</option>
+            </select>
+        </div>
         <button @onclick="FilterTransactions" class="btn btn-primary">Apply Filter</button>
     </div>
 </div>
@@ -104,6 +114,7 @@
 @code {
     private DateTime StartDate { get; set; } = DateTime.Today.AddMonths(-1);
     private DateTime EndDate { get; set; } = DateTime.Today;
+    private string SelectedType { get; set; } = "All";
     private List<TransactionItem> FilteredTransactions { get; set; } = new();
     private bool showConfirmDialog = false;
 
@@ -120,7 +131,14 @@
 
     private void FilterTransactions()
     {
-        FilteredTransactions = TransactionService.GetFilteredTransactions(StartDate, EndDate);
+        var transactions = TransactionService.GetFilteredTransactions(StartDate, EndDate);
+
+        if (SelectedType != "All")
+        {
+            transactions = transactions.Where(t => t.Type == SelectedType).ToList();
+        }
+
+        FilteredTransactions = transactions;
         StateHasChanged();
     }
 

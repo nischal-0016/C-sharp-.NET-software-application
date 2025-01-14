@@ -1,6 +1,40 @@
 ﻿@page "/home"
 
 <div class="home-container">
-    <h1>Welcome to ExpenseTracker!</h1>
-    <p>You are now logged in.</p>
+    <h2>Welcome to Expense Tracker</h2>
+    <p>Manage your finances with ease. Use the buttons below to navigate through the app:</p>
+
+    <div class="button-group">
+        <div class="button-section">
+            <p>Go to your <strong>Dashboard</strong> to view an overview of your expenses, inflows, and debts.</p>
+            <button class="btn" @onclick="NavigateToDashboard">Dashboard</button>
+        </div>
+        <div class="button-section">
+            <p>Add a new <strong>Transaction</strong> to track your income or expenses.</p>
+            <button class="btn" @onclick="NavigateToAddTransaction">Add Transaction</button>
+        </div>
+        <div class="button-section">
+            <p>Manage your <strong>Tags</strong> to organize your transactions better.</p>
+            <button class="btn" @onclick="NavigateToAddTag">Add Tag</button>
+        </div>
+    </div>
 </div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
+    private void NavigateToDashboard()
+    {
+        NavigationManager.NavigateTo("/dashboard");
+    }
+
+    private void NavigateToAddTransaction()
+    {
+        NavigationManager.NavigateTo("/expenses");
+    }
+
+    private void NavigateToAddTag()
+    {
+        NavigationManager.NavigateTo("/tag");
+    }
+}
