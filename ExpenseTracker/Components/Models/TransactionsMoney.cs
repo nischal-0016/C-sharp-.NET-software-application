@@ -6,11 +6,11 @@ namespace ExpenseTracker.Models
     {
         public int Id { get; set; }
         public decimal Amount { get; set; }
-        public string Type { get; set; } // "Inflow" or "Outflow"
+        public string Type { get; set; } 
         public DateTime Date { get; set; }
         public string Description { get; set; }
-        public string Category { get; set; } // E.g., "Groceries", "Salary", etc.
-        public List<Tag> Tags { get; set; } // Many-to-many relationship with tags
+        public string Category { get; set; } 
+        public List<Tag> Tags { get; set; } 
 
         public TransactionMoney()
         {

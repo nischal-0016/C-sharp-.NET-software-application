@@ -74,7 +74,6 @@
         <button type="button" class="btn btn-secondary" @onclick="NavigateToDashboard">Cancel</button>
     </div>
 </EditForm>
-
 @code {
     private TransactionItem newTransaction = new() { Date = DateTime.Today };
     private string selectedTag;
@@ -104,38 +103,16 @@
 
             if (debt != null)
             {
-                // Create a debt payment transaction
-                var debtPayment = new TransactionItem
-                    {
-                        Date = newTransaction.Date,
-                        Title = $"Debt Payment - {debt.Title}",
-                        Amount = Math.Min(newTransaction.Amount, debt.Amount),
-                        Type = "DebtPayment",
-                        Notes = $"Payment for debt: {debt.Title}",
-                        RelatedTransactionId = debt.Id
-                    };
-
-                // Update the original debt
-                debt.IsPaid = debtPayment.Amount >= debt.Amount;
-                if (!debt.IsPaid)
-                {
-                    debt.Amount -= debtPayment.Amount;
-                }
-
-                // Adjust the inflow amount
-                newTransaction.Amount -= debtPayment.Amount;
-
-                // Add both transactions
-                TransactionService.AddTransaction(debtPayment);
-                if (newTransaction.Amount > 0)
-                {
-                    TransactionService.AddTransaction(newTransaction);
-                }
+                HandleDebtPayment(debt);
             }
             else
             {
                 TransactionService.AddTransaction(newTransaction);
             }
+        }
+        else if (newTransaction.Type == "Outflow")
+        {
+            HandleOutflowTransaction();
         }
         else
         {
@@ -143,6 +120,74 @@
         }
 
         NavigateToDashboard();
+    }
+
+    private void HandleOutflowTransaction()
+    {
+        var totalInflow = TransactionService.Transactions
+            .Where(t => t.Type == "Inflow")
+            .Sum(t => t.Amount);
+
+        var totalOutflow = TransactionService.Transactions
+            .Where(t => t.Type == "Outflow")
+            .Sum(t => t.Amount);
+
+        var availableBalance = totalInflow - totalOutflow;
+
+        TransactionService.AddTransaction(new TransactionItem
+            {
+                Date = newTransaction.Date,
+                Title = newTransaction.Title,
+                Amount = newTransaction.Amount,
+                Type = "Outflow",
+                Notes = newTransaction.Notes,
+                Tag = newTransaction.Tag
+            });
+
+        if (newTransaction.Amount > availableBalance)
+        {
+            var deficit = newTransaction.Amount - availableBalance;
+
+            var debtTransaction = new TransactionItem
+                {
+                    Date = newTransaction.Date,
+                    Title = $"Debt for {newTransaction.Title}",
+                    Amount = deficit,
+                    Type = "Debt",
+                    Notes = "Debt",
+                    Tag = newTransaction.Tag,
+                    IsPaid = false
+                };
+            TransactionService.AddTransaction(debtTransaction);
+        }
+    }
+
+
+    private void HandleDebtPayment(TransactionItem debt)
+    {
+        var debtPayment = new TransactionItem
+            {
+                Date = newTransaction.Date,
+                Title = $"Debt Payment - {debt.Title}",
+                Amount = Math.Min(newTransaction.Amount, debt.Amount),
+                Type = "DebtPayment",
+                Notes = $"Payment for debt: {debt.Title}",
+                RelatedTransactionId = debt.Id
+            };
+
+        debt.IsPaid = debtPayment.Amount >= debt.Amount;
+        if (!debt.IsPaid)
+        {
+            debt.Amount -= debtPayment.Amount;
+        }
+
+        newTransaction.Amount -= debtPayment.Amount;
+
+        TransactionService.AddTransaction(debtPayment);
+        if (newTransaction.Amount > 0)
+        {
+            TransactionService.AddTransaction(newTransaction);
+        }
     }
 
     private void NavigateToDashboard()
