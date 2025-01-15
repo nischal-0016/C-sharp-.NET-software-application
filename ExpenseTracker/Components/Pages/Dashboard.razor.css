@@ -1,3 +1,4 @@
+/* Style for the Summary Grid */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -18,13 +19,14 @@
 }
 
     .amount.positive {
-        color: #28a745;
+        color: #28a745; 
     }
 
     .amount.negative {
-        color: #dc3545;
+        color: #dc3545; 
     }
 
+/* Date Filter Styling */
 .date-filter {
     display: flex;
     gap: 1rem;
@@ -32,22 +34,38 @@
     margin: 1rem 0;
 }
 
+/* Tag Styling */
 .badge {
     padding: 0.5em 1em;
     border-radius: 0.25rem;
 }
 
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.text-muted {
+    color: #6c757d; 
+}
+
+/* Type Coloring */
 .badge-inflow {
-    background-color: #28a745;
+    background-color: #28a745; 
     color: white;
 }
 
 .badge-outflow {
-    background-color: #dc3545;
+    background-color: #dc3545; 
     color: white;
 }
 
 .badge-debt {
-    background-color: #ffc107;
+    background-color: #ffc107; 
     color: black;
+}
+
+.badge-debt-payment {
+    background-color: #007bff; 
+    color: white;
 }

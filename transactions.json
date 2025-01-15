@@ -1,23 +1,67 @@
 [
   {
-    "Id": "c4efd306-ac5a-4844-a947-1bbacfe67809",
+    "Id": "0827592e-f7c2-46da-ba2d-f3294187a6fb",
     "Date": "2025-01-15T00:00:00+05:45",
-    "Title": "test",
-    "Amount": 1000,
-    "Type": "Outflow",
-    "Tag": null,
+    "Title": "gg",
+    "Amount": 2000,
+    "Type": "Inflow",
+    "Tag": "Salary",
     "Notes": "gg",
     "IsPaid": false,
     "RelatedTransactionId": null
   },
   {
-    "Id": "ee319528-8fe4-4a56-ae51-4f3b3be83c82",
+    "Id": "fdf6677b-e245-4823-81db-748ad02bdbc8",
     "Date": "2025-01-15T00:00:00+05:45",
-    "Title": "Debt for test",
-    "Amount": 1000,
+    "Title": "gghg",
+    "Amount": 3000,
+    "Type": "Outflow",
+    "Tag": "Utilities",
+    "Notes": "gg",
+    "IsPaid": false,
+    "RelatedTransactionId": null
+  },
+  {
+    "Id": "31046f33-b2c9-491c-a1ae-ebdd464a70a9",
+    "Date": "2025-01-15T00:00:00+05:45",
+    "Title": "Debt for gghg",
+    "Amount": 0,
     "Type": "Debt",
+    "Tag": "Utilities",
+    "Notes": "Automatic debt created for excess outflow",
+    "IsPaid": true,
+    "RelatedTransactionId": null
+  },
+  {
+    "Id": "e1a79ad7-f5c1-406c-8c28-8700772c53a7",
+    "Date": "2025-01-15T00:00:00+05:45",
+    "Title": "Payment for Debt for gghg",
+    "Amount": 1000,
+    "Type": "DebtPayment",
     "Tag": null,
-    "Notes": "Debt",
+    "Notes": "Payment for: Debt for gghg",
+    "IsPaid": false,
+    "RelatedTransactionId": null
+  },
+  {
+    "Id": "c32595ae-bd22-42a4-88fa-cac14a5ed0eb",
+    "Date": "2025-01-15T00:00:00+05:45",
+    "Title": "bn (Remaining after debt payment)",
+    "Amount": 1000,
+    "Type": "Inflow",
+    "Tag": "Salary",
+    "Notes": "gg",
+    "IsPaid": false,
+    "RelatedTransactionId": null
+  },
+  {
+    "Id": "7ed81782-a439-4cfa-9596-0b208eb4ad88",
+    "Date": "2025-01-15T00:00:00+05:45",
+    "Title": "sasss",
+    "Amount": 5000,
+    "Type": "Inflow",
+    "Tag": "Salary",
+    "Notes": "sas",
     "IsPaid": false,
     "RelatedTransactionId": null
   }

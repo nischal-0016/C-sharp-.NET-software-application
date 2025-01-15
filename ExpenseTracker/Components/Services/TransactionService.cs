@@ -6,20 +6,19 @@ namespace ExpenseTracker.Services
 {
     public class TransactionService
     {
-        private readonly string FilePath;
+        private readonly string FilePath = @"C:\Users\koira\Source\Repos\C-.NET-software-application\transactions.json";
         private List<TransactionItem> transactions = new();
         public event Action OnChange;
 
         public IReadOnlyList<TransactionItem> Transactions => transactions;
 
+        // Constructor to load transactions when the service is initialized
         public TransactionService()
         {
-            string directoryPath = @"C:\Users\koira\Source\Repos\C-.NET-software-application";
-            FilePath = Path.Combine(directoryPath, "transactions.json");
-
-            LoadTransactions();
+            LoadTransactions(); 
         }
 
+        // Add a new transaction
         public void AddTransaction(TransactionItem transaction)
         {
             var newTransaction = new TransactionItem
@@ -28,22 +27,16 @@ namespace ExpenseTracker.Services
                 Title = transaction.Title,
                 Type = transaction.Type,
                 Amount = transaction.Amount,
-                Notes = transaction.Notes
+                Notes = transaction.Notes,
+                Tag = transaction.Tag
             };
 
             transactions.Add(newTransaction);
-            SaveTransactions();
+            SaveTransactions(); // Save after adding
             OnChange?.Invoke();
         }
 
-        public List<TransactionItem> GetFilteredTransactions(DateTime startDate, DateTime endDate)
-        {
-            return transactions
-                .Where(t => t.Date.Date >= startDate.Date && t.Date.Date <= endDate.Date)
-                .OrderByDescending(t => t.Date)
-                .ToList();
-        }
-
+        // Load transactions from the file
         private void LoadTransactions()
         {
             try
@@ -57,16 +50,27 @@ namespace ExpenseTracker.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading transactions: {ex.Message}");
-                transactions = new List<TransactionItem>();
+                transactions = new List<TransactionItem>(); // Initialize empty list if there's an error
             }
         }
 
+        // Save transactions to the file
         private void SaveTransactions()
         {
             try
             {
+                // Ensure the directory exists
+                var directory = Path.GetDirectoryName(FilePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                // Serialize and save the transactions to the file
                 var json = JsonSerializer.Serialize(transactions, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(FilePath, json);
+
+                Console.WriteLine("Transactions saved to file.");
             }
             catch (Exception ex)
             {
@@ -74,11 +78,13 @@ namespace ExpenseTracker.Services
             }
         }
 
+
+        // Clear all transactions
         public void ClearAllTransactions()
         {
             transactions.Clear();
             SaveTransactions(); 
-            OnChange?.Invoke(); 
+            OnChange?.Invoke();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿public class TagService
 {
-    public List<string> Tags { get; private set; } = new List<string> { "Food", "Transport", "Utilities", "Entertainment" };
+    public List<string> Tags { get; private set; } = new List<string> { "Food", "Transport", "Utilities", "Entertainment","Salary" };
 
     public void AddTag(string tag)
     {

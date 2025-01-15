@@ -74,6 +74,7 @@
         <button type="button" class="btn btn-secondary" @onclick="NavigateToDashboard">Cancel</button>
     </div>
 </EditForm>
+
 @code {
     private TransactionItem newTransaction = new() { Date = DateTime.Today };
     private string selectedTag;
@@ -83,6 +84,25 @@
     private List<TransactionItem> PendingDebts => TransactionService.Transactions
         .Where(t => t.Type == "Debt" && !t.IsPaid)
         .ToList();
+
+    // Available Balance Calculation
+    private decimal AvailableBalance
+    {
+        get
+        {
+            var totalInflow = TransactionService.Transactions
+                .Where(t => t.Type == "Inflow")
+                .Sum(t => t.Amount);
+
+            var totalOutflow = TransactionService.Transactions
+                .Where(t => t.Type == "Outflow")
+                .Sum(t => t.Amount);
+
+            var totalDebt = PendingDebts.Sum(t => t.Amount);
+
+            return totalInflow - totalOutflow - totalDebt;
+        }
+    }
 
     private void HandleTypeChange(ChangeEventArgs e)
     {
@@ -124,37 +144,35 @@
 
     private void HandleOutflowTransaction()
     {
-        var totalInflow = TransactionService.Transactions
-            .Where(t => t.Type == "Inflow")
-            .Sum(t => t.Amount);
+        var availableBalance = AvailableBalance;
 
-        var totalOutflow = TransactionService.Transactions
-            .Where(t => t.Type == "Outflow")
-            .Sum(t => t.Amount);
-
-        var availableBalance = totalInflow - totalOutflow;
-
-        TransactionService.AddTransaction(new TransactionItem
-            {
-                Date = newTransaction.Date,
-                Title = newTransaction.Title,
-                Amount = newTransaction.Amount,
-                Type = "Outflow",
-                Notes = newTransaction.Notes,
-                Tag = newTransaction.Tag
-            });
-
-        if (newTransaction.Amount > availableBalance)
+        if (newTransaction.Amount <= availableBalance)
         {
-            var deficit = newTransaction.Amount - availableBalance;
+            // If we have enough balance, just add the outflow
+            TransactionService.AddTransaction(newTransaction);
+        }
+        else
+        {
+            // Add outflow for the amount we can cover
+            TransactionService.AddTransaction(new TransactionItem
+                {
+                    Date = newTransaction.Date,
+                    Title = newTransaction.Title,
+                    Amount = newTransaction.Amount,
+                    Type = "Outflow",
+                    Notes = newTransaction.Notes,
+                    Tag = newTransaction.Tag
+                });
 
+            // Create debt only for the amount that exceeds our available balance
+            var debtAmount = newTransaction.Amount - availableBalance;
             var debtTransaction = new TransactionItem
                 {
                     Date = newTransaction.Date,
                     Title = $"Debt for {newTransaction.Title}",
-                    Amount = deficit,
+                    Amount = debtAmount,
                     Type = "Debt",
-                    Notes = "Debt",
+                    Notes = "Debt created for excess outflow",
                     Tag = newTransaction.Tag,
                     IsPaid = false
                 };
@@ -162,33 +180,55 @@
         }
     }
 
-
     private void HandleDebtPayment(TransactionItem debt)
     {
+        // Calculate how much of the inflow goes to debt payment
+        var debtPaymentAmount = Math.Min(newTransaction.Amount, debt.Amount);
+
+        // Create debt payment transaction
         var debtPayment = new TransactionItem
             {
                 Date = newTransaction.Date,
-                Title = $"Debt Payment - {debt.Title}",
-                Amount = Math.Min(newTransaction.Amount, debt.Amount),
+                Title = $"Payment for {debt.Title}",
+                Amount = debtPaymentAmount,
                 Type = "DebtPayment",
-                Notes = $"Payment for debt: {debt.Title}",
+                Notes = $"Payment for: {debt.Title}",
                 RelatedTransactionId = debt.Id
             };
 
-        debt.IsPaid = debtPayment.Amount >= debt.Amount;
-        if (!debt.IsPaid)
+        // Add the debt payment transaction
+        TransactionService.AddTransaction(debtPayment);
+
+        // Update the original debt's amount or mark it as paid
+        var originalDebt = TransactionService.Transactions
+            .FirstOrDefault(t => t.Id == debt.Id);
+
+        if (originalDebt != null)
         {
-            debt.Amount -= debtPayment.Amount;
+            originalDebt.Amount -= debtPaymentAmount; // Reduce the debt amount
+            if (originalDebt.Amount <= 0)
+            {
+                originalDebt.IsPaid = true; // Mark debt as paid if fully cleared
+            }
         }
 
-        newTransaction.Amount -= debtPayment.Amount;
-
-        TransactionService.AddTransaction(debtPayment);
-        if (newTransaction.Amount > 0)
+        // If there's remaining amount after debt payment, add it as regular inflow
+        var remainingAmount = newTransaction.Amount - debtPaymentAmount;
+        if (remainingAmount > 0)
         {
-            TransactionService.AddTransaction(newTransaction);
+            var remainingInflow = new TransactionItem
+                {
+                    Date = newTransaction.Date,
+                    Title = $"{newTransaction.Title} (Remaining after debt payment)",
+                    Amount = remainingAmount,
+                    Type = "Inflow",
+                    Notes = newTransaction.Notes,
+                    Tag = newTransaction.Tag
+                };
+            TransactionService.AddTransaction(remainingInflow);
         }
     }
+
 
     private void NavigateToDashboard()
     {

@@ -18,12 +18,16 @@
             <span class="amount negative">Rs @TotalOutflows.ToString("N2")</span>
         </div>
         <div class="summary-item">
-            <label>Total Debts:</label>
-            <span class="amount">Rs @TotalDebts.ToString("N2")</span>
+            <label>Paid Debts:</label>
+            <span class="amount positive">Rs @TotalPaidDebts.ToString("N2")</span>
         </div>
         <div class="summary-item">
             <label>Pending Debts:</label>
             <span class="amount negative">Rs @PendingDebts.ToString("N2")</span>
+        </div>
+        <div class="summary-item">
+            <label>Total Balance:</label>
+            <span class="amount balance">Rs @TotalBalance.ToString("N2")</span>
         </div>
     </div>
 </div>
@@ -43,7 +47,12 @@
                 <option value="Inflow">Inflow</option>
                 <option value="Outflow">Outflow</option>
                 <option value="Debt">Debt</option>
+                <option value="DebtPayment">Debt Payment</option>
             </select>
+        </div>
+        <div>
+            <label>Filter by Tag:</label>
+            <input type="text" @bind="TagFilter" class="form-control" placeholder="Enter tag to filter" />
         </div>
         <button @onclick="FilterTransactions" class="btn btn-primary">Apply Filter</button>
     </div>
@@ -58,6 +67,7 @@
                 <th>Type</th>
                 <th>Amount</th>
                 <th>Notes</th>
+                <th>Tag</th>
             </tr>
         </thead>
         <tbody>
@@ -67,17 +77,43 @@
                     <td>@transaction.Date.ToShortDateString()</td>
                     <td>@transaction.Title</td>
                     <td>
-                        <span class="badge @GetTypeClass(transaction.Type)">
-                            @transaction.Type
-                        </span>
+                        @if (transaction.Type == "Inflow")
+                        {
+                            <span class="badge badge-inflow">@transaction.Type</span>
+                        }
+                        else if (transaction.Type == "Outflow")
+                        {
+                            <span class="badge badge-outflow">@transaction.Type</span>
+                        }
+                        else if (transaction.Type == "Debt")
+                        {
+                            <span class="badge badge-debt">@transaction.Type</span>
+                        }
+                        else if (transaction.Type == "DebtPayment")
+                        {
+                            <span class="badge badge-debt-payment">@transaction.Type</span>
+                        }
+                        else
+                        {
+                            <span>@transaction.Type</span>
+                        }
                     </td>
-                    <td class="@GetAmountClass(transaction.Type)">
-                        Rs @transaction.Amount.ToString("N2")
-                    </td>
+                    <td>@transaction.Amount</td>
                     <td>@transaction.Notes</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(transaction.Tag))
+                        {
+                            <span class="badge badge-info">@transaction.Tag</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No Tag</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
+
     </table>
 </div>
 
@@ -115,8 +151,29 @@
     private DateTime StartDate { get; set; } = DateTime.Today.AddMonths(-1);
     private DateTime EndDate { get; set; } = DateTime.Today;
     private string SelectedType { get; set; } = "All";
+    private string TagFilter { get; set; } = string.Empty;
     private List<TransactionItem> FilteredTransactions { get; set; } = new();
     private bool showConfirmDialog = false;
+
+    public decimal TotalInflows => TransactionService.Transactions
+        .Where(t => t.Type == "Inflow")
+        .Sum(t => t.Amount);
+
+    public decimal TotalOutflows => TransactionService.Transactions
+        .Where(t => t.Type == "Outflow")
+        .Sum(t => t.Amount);
+
+    public decimal TotalPaidDebts => TransactionService.Transactions
+        .Where(t => t.Type == "DebtPayment")
+        .Sum(t => t.Amount);
+
+    public decimal PendingDebts => TransactionService.Transactions
+        .Where(t => t.Type == "Debt" && !t.IsPaid)
+        .Sum(debt => debt.Amount - TransactionService.Transactions
+            .Where(t => t.Type == "DebtPayment" && t.RelatedTransactionId == debt.Id)
+            .Sum(t => t.Amount));
+
+    public decimal TotalBalance => Math.Max(0, TotalInflows - TotalOutflows - PendingDebts);
 
     protected override void OnInitialized()
     {
@@ -131,91 +188,22 @@
 
     private void FilterTransactions()
     {
-        var transactions = TransactionService.GetFilteredTransactions(StartDate, EndDate);
+        var transactions = TransactionService.Transactions
+            .Where(t => t.Date >= StartDate && t.Date <= EndDate)
+            .ToList();
 
         if (SelectedType != "All")
         {
             transactions = transactions.Where(t => t.Type == SelectedType).ToList();
         }
 
+        if (!string.IsNullOrEmpty(TagFilter))
+        {
+            transactions = transactions.Where(t => t.Tag != null && t.Tag.Contains(TagFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
         FilteredTransactions = transactions;
-        StateHasChanged();
     }
-
-    private decimal TotalInflows => TransactionService.Transactions
-        .Where(t => t.Type == "Inflow")
-        .Sum(t => t.Amount);
-
-    private decimal TotalOutflows => TransactionService.Transactions
-        .Where(t => t.Type == "Outflow")
-        .Sum(t => t.Amount);
-
-    private decimal TotalDebts
-    {
-        get
-        {
-            var debts = TransactionService.Transactions
-                .Where(t => t.Type == "Debt")
-                .ToList();
-
-            decimal totalDebt = 0;
-
-            foreach (var debt in debts)
-            {
-                var payments = TransactionService.Transactions
-                    .Where(t => t.Type == "DebtPayment" && t.RelatedTransactionId == debt.Id)
-                    .Sum(t => t.Amount);
-
-                totalDebt += debt.Amount;
-            }
-
-            return totalDebt;
-        }
-    }
-
-    private decimal PendingDebts
-    {
-        get
-        {
-            var debts = TransactionService.Transactions
-                .Where(t => t.Type == "Debt")
-                .ToList();
-
-            decimal totalPending = 0;
-
-            foreach (var debt in debts)
-            {
-                if (!debt.IsPaid)
-                {
-                    var payments = TransactionService.Transactions
-                        .Where(t => t.Type == "DebtPayment" && t.RelatedTransactionId == debt.Id)
-                        .Sum(t => t.Amount);
-
-                    totalPending += debt.Amount - payments;
-                }
-            }
-
-            return totalPending;
-        }
-    }
-
-    private string GetTypeClass(string type) => type.ToLower() switch
-    {
-        "inflow" => "badge-inflow",
-        "outflow" => "badge-outflow",
-        "debt" => "badge-debt",
-        "debtpayment" => "badge-success",
-        _ => ""
-    };
-
-    private string GetAmountClass(string type) => type.ToLower() switch
-    {
-        "inflow" => "text-success",
-        "outflow" => "text-danger",
-        "debt" => "text-warning",
-        "debtpayment" => "text-success",
-        _ => ""
-    };
 
     private void ShowClearConfirmation()
     {
@@ -233,4 +221,52 @@
         FilterTransactions();
         showConfirmDialog = false;
     }
+
+    private decimal Inflow { get; set; }
+    private decimal Outflow { get; set; }
+    private string ErrorMessage { get; set; }
+
+    private void ProcessTransaction()
+    {
+        ErrorMessage = string.Empty;
+
+        // Validate outflow does not exceed balance
+        if (Outflow > TotalBalance)
+        {
+            ErrorMessage = "Outflow exceeds available balance.";
+            return;
+        }
+
+        // Process inflow
+        if (Inflow > 0)
+        {
+            TransactionService.AddTransaction(new TransactionItem
+                {
+                    Date = DateTime.Now,
+                    Title = "Inflow",
+                    Type = "Inflow",
+                    Amount = Inflow
+                });
+        }
+
+        // Process outflow
+        if (Outflow > 0)
+        {
+            TransactionService.AddTransaction(new TransactionItem
+                {
+                    Date = DateTime.Now,
+                    Title = "Outflow",
+                    Type = "Outflow",
+                    Amount = Outflow
+                });
+        }
+
+        // Reset input fields and update state
+        Inflow = 0;
+        Outflow = 0;
+        ErrorMessage = string.Empty;
+        StateHasChanged();
+    }
 }
+
+
