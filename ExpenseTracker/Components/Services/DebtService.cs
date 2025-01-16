@@ -17,14 +17,12 @@ namespace ExpenseTracker.Services
 
         public void AddDebt(Debt debt)
         {
-            // Set the ID for the new debt
             debt.Id = _debts.Count > 0 ? _debts.Max(d => d.Id) + 1 : 1;
 
-            // Ensure CreatedAt is set
             debt.CreatedAt = DateTime.Now;
 
             _debts.Add(debt);
-            OnChange?.Invoke();  // Notify subscribers of the change
+            OnChange?.Invoke(); 
         }
 
         public List<Debt> GetDebts()
@@ -47,7 +45,6 @@ namespace ExpenseTracker.Services
             }
         }
 
-        // Additional helpful methods
         public List<Debt> GetOverdueDebts()
         {
             return _debts

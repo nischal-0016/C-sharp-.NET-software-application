@@ -194,7 +194,10 @@
 
         if (SelectedType != "All")
         {
-            transactions = transactions.Where(t => t.Type == SelectedType).ToList();
+            transactions = transactions.Where(t =>
+                SelectedType == "Debt"
+                    ? t.Type == "Debt" || t.Type == "DebtPayment"
+                    : t.Type == SelectedType).ToList();
         }
 
         if (!string.IsNullOrEmpty(TagFilter))
@@ -204,6 +207,8 @@
 
         FilteredTransactions = transactions;
     }
+
+
 
     private void ShowClearConfirmation()
     {
