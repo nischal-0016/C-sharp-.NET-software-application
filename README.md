@@ -42,10 +42,10 @@ Select the .sln file from the cloned directory.
 
 3. Build the project:
 
-# Restore NuGet packages
+Restore NuGet packages
 nuget restore
 
-# Build the solution
+Build the solution
 msbuild C-sharp-.NET-software-application.sln
 
 4. Run the application:
